@@ -1,5 +1,6 @@
 const {Pool,  Client } = require("pg");
 
+/**
 const client = new Client({
     user: "pbmtlhnw",
     host: "kandula.db.elephantsql.com",
@@ -12,7 +13,7 @@ client.connect(function(err){
     if(err) throw err;
     console.log("Connected");
 });
-
+**/
 
 
 const pool = new Pool({
@@ -20,8 +21,14 @@ const pool = new Pool({
     host: "kandula.db.elephantsql.com",
     database: "pbmtlhnw",
     password: "zxkwKJAUmzv77yzlG_5bRV6YrZJ2_f_N",
-    port: 5432
+    port: 5432,
+    idleTimeoutMillis: 0,
+    connectionTimeoutMillis: 0,
+    connectionLimit : 1,
+    waitForConnections : true
+
 });
+
 
 
 
@@ -408,7 +415,7 @@ app.get('/feedback', async (req,res)=>{
     });
 });
 
-//get all for specific app
+//get all feedback for specific app
 app.get('/feedback/:id', async(req,res) =>{
     const text = `SELECT * FROM feedback WHERE app_id  = ${req.params.id}`;
 
@@ -426,7 +433,7 @@ app.get('/feedback/:id', async(req,res) =>{
 
 });
 
-//get all for specific app
+//get all feedback for specific user
 app.get('/userfeedback/:id', async(req,res) =>{
     const text = `SELECT * FROM feedback WHERE user_id  = ${req.params.id}`;
 
@@ -554,6 +561,230 @@ app.delete('/webapp/:id', async(req,res)=>{
         client.end();
     });
 
+});
+
+
+
+//post
+app.post('/feedback/:id', async(req,res)=>{
+    const id = req.params.id;
+
+
+    toUpdate = ' ';
+    if(req.body.user_id !== undefined){toUpdate+= `user_id = '${req.body.user_id}',`;}
+    if(req.body.comment !== undefined){toUpdate+= `comment = '${req.body.comment}',`;}
+    if(req.body.rating !== undefined){toUpdate+= `rating = '${req.body.rating}',`;}
+
+    toUpdate = toUpdate.slice(0,-1);
+
+    let columnString = 'app_id,user_id, comment , rating'; //(comment , rating , notation) based off of body params
+    let valueString = `${id},${req.body.user_id} , '${req.body.comment}' , ${req.body.rating}` ;
+    let commonString = `comment = '${req.body.comment}' ,  rating = ${req.body.rating}`;
+
+    let columnString2 = `app_id , user_id `;
+    let valueString2 = `${id} , ${req.body.user_id}`;
+
+
+    // removes current rating from webapp
+    const prequery = ` DO $$
+                    begin
+                IF EXISTS (SELECT * from feedback where app_id = ${id} and user_id = ${req.body.user_id}) 
+                    THEN UPDATE web_apps SET sum_rate = sum_rate - (SELECT rating from feedback where app_id = ${id} and user_id = ${req.body.user_id}) , num_rate = num_rate - 1 ;
+                END IF;
+                END
+                $$;
+    `;
+
+    // adds/updates feedback entry
+    const query = ` INSERT INTO feedback (${columnString}) 
+    VALUES (${valueString}) 
+    ON CONFLICT (app_id, user_id) DO UPDATE 
+    SET ${commonString};
+    `;
+
+    console.log(query);
+
+
+    //adds/updates feedback record
+    const query2 = `insert into notation (${columnString2}) 
+    values (${valueString2}) 
+    on conflict (app_id , user_id) DO NOTHING;
+    `;
+
+    //updates webapp notation
+    const query3 = `UPDATE web_apps set sum_rate = sum_rate + (SELECT rating from feedback where  app_id = ${id} and user_id = ${req.body.user_id}) , num_rate = num_rate + 1;`;
+
+    //todo check if params are there and send error if needed
+
+    // comment , rating , notation , user_id
+    //update comment , rating , notation where app_id = id & user_id == user_id
+
+    const client = await pool.connect();
+
+/**
+    console.log(prequery+query+query2+query3);
+    await client.query(prequery+query+query2+query3).then(result => {
+        console.log(prequery+query+query2+query3);
+    }).catch(err => {
+        console.log(err);
+    })
+**/
+/**
+    await client.query(prequery, (err,results) =>{
+
+        console.log("pre query");
+
+        if (err) {
+            console.error(err);
+        }});
+
+    await client.query(query, (err,results) =>{
+
+        console.log("second query");
+
+    if (err) {
+        console.error(err);
+
+    }});
+
+
+    await client.query(query2, (err,results) =>{
+        console.log("third query");
+
+        if (err) {
+        console.error(err);
+
+    }});
+
+
+    await client.query(query3, (err,results) =>{
+        console.log("fourth" +
+            " query");
+    if (err) {
+        console.error(err);
+
+    }});
+
+**/
+
+    await client.query(prequery)
+        .then(results => {
+            console.log("FIRST RESULTS: " + results);
+        })
+        .then(() => client.query(query))
+        .then(results => {
+            console.log("SECOND RESULTS: " + results);
+        })
+        .then(() => client.query(query2))
+        .then(results => {
+            console.log("SECOND RESULTS: " + results);
+        })
+        .then(() => client.query(query3))
+        .then(results => {
+            console.log("SECOND RESULTS: " + results);
+
+        })
+        .catch(err => {
+            // better to handle errors at the end, probably
+            console.log(err.stack)
+        })
+
+    client.end();
+    res.status(200).send('ok');
+});
+
+
+
+//post notation on comment
+app.post('/notation/:id', async(req,res)=>{
+    const id = req.params.id;
+
+
+    // removes current rating from webapp
+    const prequery = ` DO $$
+                    begin
+                IF EXISTS (SELECT * from feedback where feedback_id = ${id} and user_id = ${req.body.user_id}) 
+                    THEN UPDATE feedback SET notation = notation + ( ${!req.body.notation} - (SELECT notation from feedback where feedback_id = ${id} and user_id = ${req.body.user_id})) ;
+                END IF;
+                END
+                $$;
+    `;
+
+    // adds/updates feedback entry
+    const query = ` INSERT INTO notation (feedback_id , user_id, notation) 
+    VALUES (${id}, ${req.body.user_id} , ${req.body.notation}) 
+    ON CONFLICT (feedback_id, user_id) DO UPDATE 
+    SET notation = ${req.body.notation};
+    `;
+
+    //todo check if params are there and send error if needed
+
+    // comment , rating , notation , user_id
+    //update comment , rating , notation where app_id = id & user_id == user_id
+
+    const client = await pool.connect();
+
+    /**
+     console.log(prequery+query+query2+query3);
+     await client.query(prequery+query+query2+query3).then(result => {
+        console.log(prequery+query+query2+query3);
+    }).catch(err => {
+        console.log(err);
+    })
+     **/
+    /**
+     await client.query(prequery, (err,results) =>{
+
+        console.log("pre query");
+
+        if (err) {
+            console.error(err);
+        }});
+
+     await client.query(query, (err,results) =>{
+
+        console.log("second query");
+
+    if (err) {
+        console.error(err);
+
+    }});
+
+
+     await client.query(query2, (err,results) =>{
+        console.log("third query");
+
+        if (err) {
+        console.error(err);
+
+    }});
+
+
+     await client.query(query3, (err,results) =>{
+        console.log("fourth" +
+            " query");
+    if (err) {
+        console.error(err);
+
+    }});
+
+     **/
+
+    await client.query(prequery)
+        .then(results => {
+            console.log("FIRST RESULTS: " + results);
+        })
+        .then(() => client.query(query))
+        .then(results => {
+            console.log("SECOND RESULTS: " + results);
+        })
+        .catch(err => {
+            // better to handle errors at the end, probably
+            console.log(err.stack)
+        })
+
+    client.end();
+    res.status(200).send('ok');
 });
 
 
