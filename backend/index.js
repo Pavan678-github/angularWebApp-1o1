@@ -232,3 +232,335 @@ app.delete('/webapp/:id', async(req,res)=>{
 
 });
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// users
+
+
+app.get('/user', async (req,res)=>{
+
+    const text = `SELECT * FROM users`;
+
+    const client = await pool.connect();
+    client.query(text, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results.rows)
+
+
+        client.end();
+    });
+});
+
+//search for webapp
+app.get('/user/:id', async(req,res) =>{
+    const text = `SELECT * FROM users WHERE app_id  = ${req.params.id}`;
+
+    const client = await pool.connect();
+    client.query(text, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results.rows)
+
+        client.end();
+    });
+
+});
+
+
+//post
+app.post('/user', async(req,res)=>{
+
+    if(!req.body.user_name){
+        res.status(400).send("user name is required.");
+        return;
+    }
+
+    const user = {
+        user_name : req.body.user_name ,
+        created_on : new Date().toISOString().slice(0, 10)
+    };
+    console.log("sending data :");
+    console.log(webApp);
+
+    const query = `
+        INSERT INTO users ( user_name, created_on)
+        VALUES ('${user.user_name}','${user.created_on}')
+        `;
+
+
+    const client = await pool.connect();
+    console.log("connected");
+    client.query(query, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results);
+        client.end();
+    });
+
+});
+
+
+//update
+app.put('/user/:id', async (req,res) =>{
+    const id = req.body.user_id;
+    let toUpdate = '';
+
+    if(req.body.app_name !== undefined){toUpdate+= `user_name = '${req.body.app_name}'`;}
+
+
+    if(toUpdate ===''){
+        res.status(400).send('No usable parameters');
+        return;
+    }
+
+
+
+    const query = `UPDATE users 
+    SET ${toUpdate}
+    where app_id = ${id}
+    `;
+
+    console.log(query);
+
+    const client = await pool.connect();
+    console.log("connected");
+    client.query(query, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results);
+        client.end();
+    });
+
+    /**
+     let appFound = webApps.find(a => a.id === parseInt(id));
+     if(!appFound){
+        res.status(404).send('web application not found');
+        return;
+    }
+
+     if(!req.body.app_name){
+        res.status(400).send("App name is required.");
+        return;
+    }
+
+     appFound.name = req.body.app_name;
+
+     if(req.body.sum_rate){
+        appFound.sum_rate += parseInt(req.body.sum_rate);
+        appFound.num_rate +=1;
+    }
+     res.send(appFound);
+
+     **/
+});
+
+//remove
+app.delete('/webapp/:id', async(req,res)=>{
+
+    let query = `DELETE FROM users where user_id = ${req.params.id}`;
+    const client = await pool.connect();
+    console.log("connected");
+    client.query(query, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results);
+        client.end();
+    });
+
+});
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// feedback
+
+
+
+app.get('/feedback', async (req,res)=>{
+
+    const text = `SELECT * FROM feedback`;
+
+    const client = await pool.connect();
+    client.query(text, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results.rows)
+
+
+        client.end();
+    });
+});
+
+//get all for specific app
+app.get('/feedback/:id', async(req,res) =>{
+    const text = `SELECT * FROM feedback WHERE app_id  = ${req.params.id}`;
+
+    const client = await pool.connect();
+    client.query(text, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results.rows)
+
+        client.end();
+    });
+
+});
+
+//get all for specific app
+app.get('/userfeedback/:id', async(req,res) =>{
+    const text = `SELECT * FROM feedback WHERE user_id  = ${req.params.id}`;
+
+    const client = await pool.connect();
+    client.query(text, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results.rows)
+
+        client.end();
+    });
+
+});
+
+
+//post
+app.post('/user', async(req,res)=>{
+
+    if(!req.body.user_name){
+        res.status(400).send("user name is required.");
+        return;
+    }
+
+    const user = {
+        user_name : req.body.user_name ,
+        created_on : new Date().toISOString().slice(0, 10)
+    };
+    console.log("sending data :");
+    console.log(webApp);
+
+    const query = `
+        INSERT INTO users ( user_name, created_on)
+        VALUES ('${user.user_name}','${user.created_on}')
+        `;
+
+
+    const client = await pool.connect();
+    console.log("connected");
+    client.query(query, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results);
+        client.end();
+    });
+
+});
+
+
+//update
+app.put('/user/:id', async (req,res) =>{
+    const id = req.body.user_id;
+    let toUpdate = '';
+
+    if(req.body.app_name !== undefined){toUpdate+= `user_name = '${req.body.app_name}'`;}
+
+
+    if(toUpdate ===''){
+        res.status(400).send('No usable parameters');
+        return;
+    }
+
+
+
+    const query = `UPDATE users 
+    SET ${toUpdate}
+    where app_id = ${id}
+    `;
+
+    console.log(query);
+
+    const client = await pool.connect();
+    console.log("connected");
+    client.query(query, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results);
+        client.end();
+    });
+
+    /**
+     let appFound = webApps.find(a => a.id === parseInt(id));
+     if(!appFound){
+        res.status(404).send('web application not found');
+        return;
+    }
+
+     if(!req.body.app_name){
+        res.status(400).send("App name is required.");
+        return;
+    }
+
+     appFound.name = req.body.app_name;
+
+     if(req.body.sum_rate){
+        appFound.sum_rate += parseInt(req.body.sum_rate);
+        appFound.num_rate +=1;
+    }
+     res.send(appFound);
+
+     **/
+});
+
+//remove
+app.delete('/webapp/:id', async(req,res)=>{
+
+    let query = `DELETE FROM users where user_id = ${req.params.id}`;
+    const client = await pool.connect();
+    console.log("connected");
+    client.query(query, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        res.status(200).json(results);
+        client.end();
+    });
+
+});
+
+
+
+
+
+// post comment on web app if user hasn't already
+// notation on feedback if user hasn't already (upsert)
+//update feedback
+//
