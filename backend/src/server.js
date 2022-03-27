@@ -1,18 +1,25 @@
 const express = require('express');
 const app = express();
-const port = process.env.PORT || 3000;
+//const port = process.env.PORT || 3000;
 const router = require('./routes/routers');
 
+
+const path = require('path');
+const fs = require('fs');
+
 //parse JSON
+app.use(express.static('dist'))
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
+app.use('login', express.static(path.resolve('/login')));
+const port = process.env.NODE_PORT || 3000;
+
+
+
+
 app.use(`/`, router);
 
-
-app.route('/*', function(req,res) {
-    res.redirect(__dirname + '../dist/frontend/index.html')
-})
 
 /* Error handler middleware */
 app.use((err, req, res, next) => {
