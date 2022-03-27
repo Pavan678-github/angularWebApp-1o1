@@ -10,9 +10,10 @@ app.use(express.urlencoded({extended: false}));
 app.use(`/`, router);
 
 
-app.get('/', (req, res) => {
-    res.json({'message': 'ok'});
+app.route('/*', function(req,res) {
+    res.redirect(__dirname + '/dist/index.html')
 })
+
 /* Error handler middleware */
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
