@@ -16,7 +16,7 @@
 <ul class="list-group">
   <li *ngFor="let app of apps " class="list-group-item list-group-item-action list-group-item-secondary">
 
-      <h4><span class="mb-1">{{app.app_name}}</span>  <span class="mb-1" style="float: right ">{{(app.sum_rate /app.num_rate) || 0}}</span>  </h4>
+      <h4><span class="mb-1">{{app.app_name}}</span>  <span class="mb-1" style="float: right ">{{(app.sum_rate /app.num_rate).toFixed(2) || 0}}</span>  </h4>
 
       <span  style="display: block" class="name">{{app.app_desc}}</span>
       <span style="display: block; font-size: small" class="name">{{app.created_on | date: 'dd/MM/yyyy'}}</span>

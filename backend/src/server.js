@@ -20,6 +20,10 @@ const port = process.env.NODE_PORT || 3000;
 
 app.use(`/`, router);
 
+app.get('/*',function(req,res){
+
+    res.sendFile('/dist/index.html' , {root : '.'} );
+});
 
 /* Error handler middleware */
 app.use((err, req, res, next) => {
