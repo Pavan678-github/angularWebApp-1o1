@@ -8,7 +8,7 @@ const path = require('path');
 const fs = require('fs');
 
 //parse JSON
-app.use(express.static('dist'))
+
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
@@ -20,10 +20,7 @@ const port = process.env.NODE_PORT || 3000;
 
 app.use(`/`, router);
 
-app.get('/*',function(req,res){
 
-    res.sendFile('/dist/index.html' , {root : '.'} );
-});
 
 /* Error handler middleware */
 app.use((err, req, res, next) => {
