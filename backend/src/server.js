@@ -18,7 +18,7 @@ const port = process.env.NODE_PORT || 3000;
 
 
 
-app.use(`/`, router);
+app.use(``, router);
 
 
 /* Error handler middleware */
