@@ -53,6 +53,13 @@ export class FeedbackComponent implements OnInit {
 
     });
 
+    let index = this.feedback.findIndex(x => x.user_id === Number(localStorage.getItem("user_id")));
+    this.feedback[index].comment = comment;
+    this.feedback[index].rating = Number(rating);
+
+
+
+
   }
 
 
