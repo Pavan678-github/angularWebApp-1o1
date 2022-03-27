@@ -12,13 +12,13 @@ app.use(express.static('dist'))
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 
-app.use('login', express.static(path.resolve('/login')));
+
 const port = process.env.NODE_PORT || 3000;
 
 
 
 
-app.use(``, router);
+app.use(`/`, router);
 
 
 /* Error handler middleware */

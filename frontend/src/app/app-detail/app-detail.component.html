@@ -1,5 +1,5 @@
 <div *ngIf="app && userName">
-  <h2 style="font-weight: bold; text-transform: capitalize " >{{app.app_name }}  <span class="mb-1" style="float: right ">{{(app.sum_rate /app.num_rate) || 0}}</span>  </h2>
+  <h2 style="font-weight: bold; text-transform: capitalize " >{{app.app_name }}  <span class="mb-1" style="float: right ">{{(app.sum_rate /app.num_rate).toFixed(2) || 0}}</span>  </h2>
   <h4  >{{app.app_desc }} </h4>
   <h5>Created by : {{userName}} </h5>
 
