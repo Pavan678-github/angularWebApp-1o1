@@ -11,7 +11,7 @@ app.use(`/`, router);
 
 
 app.route('/*', function(req,res) {
-    res.redirect(__dirname + '../dist/index.html')
+    res.redirect(__dirname + '../dist/frontend/index.html')
 })
 
 /* Error handler middleware */
