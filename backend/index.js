@@ -24,8 +24,8 @@ const pool = new Pool({
     port: 5432,
     idleTimeoutMillis: 0,
     connectionTimeoutMillis: 0,
-    connectionLimit : 1,
-    waitForConnections : true
+    //connectionLimit : 1,
+    //waitForConnections : true
 
 });
 
@@ -94,10 +94,12 @@ app.get('/webapp', async (req,res)=>{
             return;
         }
 
-        res.status(200).json(results.rows)
+        res.setHeader('Content-Type', 'application/json');
+        client.release();
+        res.status(200).json(results.rows);
 
 
-        client.end();
+
     });
 });
 
@@ -111,10 +113,10 @@ app.get('/webapp/:id', async(req,res) =>{
             console.error(err);
             return;
         }
-
+        client.release();
         res.status(200).json(results.rows)
 
-        client.end();
+
     });
 
 });
@@ -141,7 +143,7 @@ app.post('/webapp', async(req,res)=>{
 
     const query = `
         INSERT INTO web_apps ( user_id, app_name,app_desc, sum_rate,num_rate,created_on)
-        VALUES (${webApp.user_id},'${webApp.app_name}','${webApp.app_desc}', 0,0,'${webApp.created_on}')
+        VALUES (${webApp.user_id},'${webApp.app_name}','${webApp.app_desc}', 0,0,'${webApp.created_on}') RETURNING *
         `;
 
 
@@ -153,8 +155,8 @@ app.post('/webapp', async(req,res)=>{
             return;
         }
 
-        res.status(200).json(results);
-        client.end();
+        client.release();
+        res.status(200).json(results.rows);
     });
 
 });
@@ -194,8 +196,8 @@ app.put('/webapp/:id', async (req,res) =>{
             return;
         }
 
+        client.release();
         res.status(200).json(results);
-        client.end();
     });
 
     /**
@@ -233,8 +235,8 @@ app.delete('/webapp/:id', async(req,res)=>{
             return;
         }
 
+        client.release();
         res.status(200).json(results);
-        client.end();
     });
 
 });
@@ -245,8 +247,14 @@ app.delete('/webapp/:id', async(req,res)=>{
 
 app.get('/user', async (req,res)=>{
 
-    const text = `SELECT * FROM users`;
+    let uNameSearch = '';
+    if (req.body.user_name !== undefined){
+        uNameSearch += ' WHERE user_name = ';
+        uNameSearch += `'${req.body.user_name}'`;
+    }
+    const text = `SELECT * FROM users`+uNameSearch;
 
+    console.log(text);
     const client = await pool.connect();
     client.query(text, (err,results) =>{
         if (err) {
@@ -254,16 +262,34 @@ app.get('/user', async (req,res)=>{
             return;
         }
 
+        client.release();
         res.status(200).json(results.rows)
-
-
-        client.end();
     });
 });
 
+app.get('/username/:name', async(req,res) =>{
+    const text = `SELECT * FROM users WHERE user_name  = '${req.params.name}' LIMIT 1`;
+
+    console.log(text);
+    const client = await pool.connect();
+    client.query(text, (err,results) =>{
+        if (err) {
+            console.error(err);
+            return;
+        }
+
+        client.release();
+
+        res.status(200).json(results.rows)
+    });
+
+});
+
+
+
 //search for webapp
 app.get('/user/:id', async(req,res) =>{
-    const text = `SELECT * FROM users WHERE app_id  = ${req.params.id}`;
+    const text = `SELECT * FROM users WHERE user_id  = ${req.params.id}`;
 
     const client = await pool.connect();
     client.query(text, (err,results) =>{
@@ -272,9 +298,9 @@ app.get('/user/:id', async(req,res) =>{
             return;
         }
 
-        res.status(200).json(results.rows)
+        client.release();
 
-        client.end();
+        res.status(200).json(results.rows)
     });
 
 });
@@ -283,6 +309,8 @@ app.get('/user/:id', async(req,res) =>{
 //post
 app.post('/user', async(req,res)=>{
 
+    console.log("posting user");
+    console.log(req.body);
     if(!req.body.user_name){
         res.status(400).send("user name is required.");
         return;
@@ -293,11 +321,10 @@ app.post('/user', async(req,res)=>{
         created_on : new Date().toISOString().slice(0, 10)
     };
     console.log("sending data :");
-    console.log(webApp);
 
     const query = `
         INSERT INTO users ( user_name, created_on)
-        VALUES ('${user.user_name}','${user.created_on}')
+        VALUES ('${user.user_name}','${user.created_on}') RETURNING user_id
         `;
 
 
@@ -309,8 +336,8 @@ app.post('/user', async(req,res)=>{
             return;
         }
 
-        res.status(200).json(results);
-        client.end();
+        client.release();
+        res.status(200).json(results.rows);
     });
 
 });
@@ -346,8 +373,8 @@ app.put('/user/:id', async (req,res) =>{
             return;
         }
 
+        client.release();
         res.status(200).json(results);
-        client.end();
     });
 
     /**
@@ -385,8 +412,8 @@ app.delete('/webapp/:id', async(req,res)=>{
             return;
         }
 
+        client.release();
         res.status(200).json(results);
-        client.end();
     });
 
 });
@@ -408,16 +435,16 @@ app.get('/feedback', async (req,res)=>{
             return;
         }
 
+        client.release();
+
+
         res.status(200).json(results.rows)
-
-
-        client.end();
     });
 });
 
 //get all feedback for specific app
 app.get('/feedback/:id', async(req,res) =>{
-    const text = `SELECT * FROM feedback WHERE app_id  = ${req.params.id}`;
+    const text = `SELECT * FROM feedback, users WHERE feedback.app_id  = ${req.params.id} AND users.user_id = feedback.user_id`;
 
     const client = await pool.connect();
     client.query(text, (err,results) =>{
@@ -426,9 +453,9 @@ app.get('/feedback/:id', async(req,res) =>{
             return;
         }
 
-        res.status(200).json(results.rows)
+        client.release();
 
-        client.end();
+        res.status(200).json(results.rows)
     });
 
 });
@@ -444,9 +471,9 @@ app.get('/userfeedback/:id', async(req,res) =>{
             return;
         }
 
-        res.status(200).json(results.rows)
+        client.release();
 
-        client.end();
+        res.status(200).json(results.rows)
     });
 
 });
@@ -465,7 +492,6 @@ app.post('/user', async(req,res)=>{
         created_on : new Date().toISOString().slice(0, 10)
     };
     console.log("sending data :");
-    console.log(webApp);
 
     const query = `
         INSERT INTO users ( user_name, created_on)
@@ -481,8 +507,8 @@ app.post('/user', async(req,res)=>{
             return;
         }
 
+        client.release();
         res.status(200).json(results);
-        client.end();
     });
 
 });
@@ -518,8 +544,8 @@ app.put('/user/:id', async (req,res) =>{
             return;
         }
 
+        client.release();
         res.status(200).json(results);
-        client.end();
     });
 
     /**
@@ -557,8 +583,8 @@ app.delete('/webapp/:id', async(req,res)=>{
             return;
         }
 
+        client.release();
         res.status(200).json(results);
-        client.end();
     });
 
 });
@@ -612,7 +638,7 @@ app.post('/feedback/:id', async(req,res)=>{
     `;
 
     //updates webapp notation
-    const query3 = `UPDATE web_apps set sum_rate = sum_rate + (SELECT rating from feedback where  app_id = ${id} and user_id = ${req.body.user_id}) , num_rate = num_rate + 1;`;
+    const query3 = `UPDATE web_apps set sum_rate = sum_rate + (SELECT rating from feedback where  app_id = ${id} and user_id = ${req.body.user_id}) , num_rate = num_rate + 1 RETURNING (select * from feedback where feedback_id = ${req.body.feedback_id});`;
 
     //todo check if params are there and send error if needed
 
@@ -621,14 +647,6 @@ app.post('/feedback/:id', async(req,res)=>{
 
     const client = await pool.connect();
 
-/**
-    console.log(prequery+query+query2+query3);
-    await client.query(prequery+query+query2+query3).then(result => {
-        console.log(prequery+query+query2+query3);
-    }).catch(err => {
-        console.log(err);
-    })
-**/
 /**
     await client.query(prequery, (err,results) =>{
 
@@ -669,27 +687,24 @@ app.post('/feedback/:id', async(req,res)=>{
 
     await client.query(prequery)
         .then(results => {
-            console.log("FIRST RESULTS: " + results);
         })
         .then(() => client.query(query))
         .then(results => {
-            console.log("SECOND RESULTS: " + results);
         })
         .then(() => client.query(query2))
         .then(results => {
-            console.log("SECOND RESULTS: " + results);
         })
         .then(() => client.query(query3))
         .then(results => {
-            console.log("SECOND RESULTS: " + results);
-
+            client.release();
+            res.status(200).json(results);
         })
         .catch(err => {
             // better to handle errors at the end, probably
             console.log(err.stack)
         })
 
-    client.end();
+    client.release();
     res.status(200).send('ok');
 });
 
@@ -703,12 +718,17 @@ app.post('/notation/:id', async(req,res)=>{
     // removes current rating from webapp
     const prequery = ` DO $$
                     begin
-                IF EXISTS (SELECT * from feedback where feedback_id = ${id} and user_id = ${req.body.user_id}) 
-                    THEN UPDATE feedback SET notation = notation + ( ${!req.body.notation} - (SELECT notation from feedback where feedback_id = ${id} and user_id = ${req.body.user_id})) ;
+                IF EXISTS (SELECT * from feedback where feedback_id = ${req.body.feedback_id} and user_id = ${req.body.user_id}) 
+                    THEN UPDATE feedback SET notation = notation + ( ${req.body.notation} - (SELECT notation from feedback where feedback_id = ${req.body.feedback_id} and user_id = ${req.body.user_id}))  where app_id = ${id} ;
+                ELSE 
+                UPDATE feedback SET notation = notation + ( ${req.body.notation} ) where app_id = ${id}  ;
+                    
                 END IF;
                 END
                 $$;
     `;
+    console.log("prequery");
+    console.log(prequery);
 
     // adds/updates feedback entry
     const query = ` INSERT INTO notation (feedback_id , user_id, notation) 
@@ -783,7 +803,7 @@ app.post('/notation/:id', async(req,res)=>{
             console.log(err.stack)
         })
 
-    client.end();
+    client.release();
     res.status(200).send('ok');
 });
 

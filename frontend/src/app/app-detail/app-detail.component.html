@@ -1,0 +1,9 @@
+<div *ngIf="app && userName">
+  <h2>{{app.app_name }}  <span class="mb-1" style="float: right ">{{(app.sum_rate /app.num_rate) || 0}}</span>  </h2>
+  <h4>{{app.app_desc }} </h4>
+  <h5>Created by : {{userName}} </h5>
+
+  <span style="display: block; font-size: small" class="name">{{app.created_on | date: 'dd/MM/yyyy'}}</span>
+
+</div>
+<app-feedback></app-feedback>

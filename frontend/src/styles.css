@@ -1,0 +1,16 @@
+/* You can add global styles to this file, and also import other style files */
+@import '~bootstrap/dist/css/bootstrap.min.css';
+
+#grad {
+  background-image: linear-gradient(to bottom right, #bc00ff, #7939ff);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  height: 100%;
+}
+
+
+.card {
+  margin: 0 auto;
+  float: none;
+  margin-bottom: 10px;
+}

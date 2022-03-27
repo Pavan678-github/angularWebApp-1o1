@@ -1,0 +1,43 @@
+<div class="card">
+  <div class="row">
+
+    <div class="comment-box ml-2">
+      <h4>Review App</h4>
+
+      <label for="quantity" style="margin: 3%">Rate App : </label>
+      <input type="number" id="quantity" name="quantity" min="1" max="5" #ratingValue>
+
+      <div class="comment-area"> <textarea class="form-control" placeholder="what is your view?" rows="4" #commentArea></textarea> </div>
+      <div class="text-center">
+        <button style="margin-bottom: 3%; margin-top: 3%; text-align: center ; "  type="button" class="btn btn-secondary " (click)="addFeedback(commentArea.value, ratingValue.value )   ;commentArea.value= '';">
+          Submit
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<ul class="list-group" *ngFor="let comment of feedback ">
+
+  <li  *ngIf="comment.comment.length > 0" class="list-group-item list-group-item-action list-group-item-secondary">
+
+
+
+    <span  style="display: block" class="name">User : {{comment.user_name}}</span>
+    <span  style="display: block" class="name">Rating : {{comment.rating}}</span>
+    <span  style="display: block" class="name"> Comment : <br> {{comment.comment}}</span>
+    <span style="display: block; text-align: right; font-size: large; font-weight: bold ; margin-right: 8%" class="name" id="notation" #notationVal>{{comment.notation + visNote || visNote}}</span>
+
+    <div class="btn-group" role="group" style="float: right">
+      <button type="button" class="btn btn-secondary" (click)="setNotation(-1 , comment.feedback_id)">-1</button>
+      <button type="button" class="btn btn-secondary" (click)="setNotation(0 , comment.feedback_id)">0</button>
+      <button type="button" class="btn btn-secondary" (click)="setNotation(1 , comment.feedback_id) ;" >+1</button>
+    </div>
+
+
+  </li>
+
+</ul>
