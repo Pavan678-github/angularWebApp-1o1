@@ -5,6 +5,9 @@
 
 trigger:
 - main
+variables:
+  uiSource: 'src'
+  uiBuild: '$(uiSource)/build'
 
 pool:
   vmImage: ubuntu-latest
@@ -16,7 +19,9 @@ steps:
   displayName: 'Install Node.js'
 
 - script: |
+    pushd $uiSource
     npm install -g @angular/cli
     npm install
     ng build --prod
+    popd
   displayName: 'npm install and build'
